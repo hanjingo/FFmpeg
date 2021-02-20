@@ -293,7 +293,7 @@ typedef struct FilterGraph {
     int         nb_outputs;
 } FilterGraph;
 
-typedef struct InputStream {
+typedef struct InputStream {    // 输入流
     int file_index;
     AVStream *st;
     int discard;             /* true if stream data should be discarded */
@@ -442,25 +442,25 @@ typedef enum {
     MUXER_FINISHED = 2,
 } OSTFinished ;
 
-typedef struct OutputStream {
-    int file_index;          /* file index */
-    int index;               /* stream index in the output file */
-    int source_index;        /* InputStream index */
-    AVStream *st;            /* stream in the output file */
-    int encoding_needed;     /* true if encoding needed for this stream */
-    int frame_number;
+typedef struct OutputStream { // 输出流
+    int file_index;          /* file index */                               // 文件索引
+    int index;               /* stream index in the output file */          // 输出流索引
+    int source_index;        /* InputStream index */                        // 输入流索引
+    AVStream *st;            /* stream in the output file */                // 输出流
+    int encoding_needed;     /* true if encoding needed for this stream */  // 是否需要编码
+    int frame_number;                                                       // 帧号
     /* input pts and corresponding output pts
        for A/V sync */
-    struct InputStream *sync_ist; /* input stream to sync against */
+    struct InputStream *sync_ist; /* input stream to sync against */        // 输入流同步依据
     int64_t sync_opts;       /* output frame counter, could be changed to some true timestamp */ // FIXME look at frame_number
     /* pts of the first frame encoded for this stream, used for limiting
      * recording time */
-    int64_t first_pts;
+    int64_t first_pts;          // 第一帧的编码时间
     /* dts of the last packet sent to the muxer */
-    int64_t last_mux_dts;
+    int64_t last_mux_dts;       // 最后一个封包时间
     // the timebase of the packets sent to the muxer
-    AVRational mux_timebase;
-    AVRational enc_timebase;
+    AVRational mux_timebase;    // 封包时间基
+    AVRational enc_timebase;    // 编码时间基
 
     AVBSFContext            *bsf_ctx;
 
@@ -591,7 +591,7 @@ extern int audio_volume;
 extern int audio_sync_method;
 extern int video_sync_method;
 extern float frame_drop_threshold;
-extern int do_benchmark;
+extern int do_benchmark;            // 是否开启性能测试工具
 extern int do_benchmark_all;
 extern int do_deinterlace;
 extern int do_hex_dump;

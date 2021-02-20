@@ -146,13 +146,13 @@ static uint8_t *subtitle_out;
 
 InputStream **input_streams = NULL;
 int        nb_input_streams = 0;
-InputFile   **input_files   = NULL;
-int        nb_input_files   = 0;
+InputFile   **input_files   = NULL;     // 输入源数组
+int        nb_input_files   = 0;        // 输入源数量
 
 OutputStream **output_streams = NULL;
 int         nb_output_streams = 0;
-OutputFile   **output_files   = NULL;
-int         nb_output_files   = 0;
+OutputFile   **output_files   = NULL;   // 输出源数组
+int         nb_output_files   = 0;      // 输出源个数
 
 FilterGraph **filtergraphs;
 int        nb_filtergraphs;
@@ -3628,7 +3628,7 @@ static void report_new_stream(int input_index, AVPacket *pkt)
     file->nb_streams_warn = pkt->stream_index + 1;
 }
 
-static int transcode_init(void)
+static int transcode_init(void) // 转码初始化
 {
     int ret = 0, i, j, k;
     AVFormatContext *oc;
@@ -4626,7 +4626,7 @@ static int transcode_step(void)
 /*
  * The following code is the main loop of the file converter
  */
-static int transcode(void)
+static int transcode(void) // 开始转换
 {
     int ret, i;
     AVFormatContext *os;
@@ -4635,7 +4635,7 @@ static int transcode(void)
     int64_t timer_start;
     int64_t total_packets_written = 0;
 
-    ret = transcode_init();
+    ret = transcode_init(); // 初始化
     if (ret < 0)
         goto fail;
 
@@ -4821,7 +4821,7 @@ static void log_callback_null(void *ptr, int level, const char *fmt, va_list vl)
 int main(int argc, char **argv)
 {
     int i, ret;
-    BenchmarkTimeStamps ti;
+    BenchmarkTimeStamps ti; // 性能测试起始时间戳
 
     init_dynload();
 
@@ -4840,14 +4840,14 @@ int main(int argc, char **argv)
     }
 
 #if CONFIG_AVDEVICE
-    avdevice_register_all();
+    avdevice_register_all();                // 注册设备信息
 #endif
-    avformat_network_init();
+    avformat_network_init();                // 初始化网络
 
-    show_banner(argc, argv, options);
+    show_banner(argc, argv, options);       // 打印ffmpeg的版本信息
 
     /* parse options and open all input/output files */
-    ret = ffmpeg_parse_options(argc, argv);
+    ret = ffmpeg_parse_options(argc, argv); // 解析输入命令
     if (ret < 0)
         exit_program(1);
 
@@ -4867,12 +4867,12 @@ int main(int argc, char **argv)
         if (strcmp(output_files[i]->ctx->oformat->name, "rtp"))
             want_sdp = 0;
     }
-
-    current_time = ti = get_benchmark_time_stamps();
-    if (transcode() < 0)
+    
+    current_time = ti = get_benchmark_time_stamps();    // 性能测试起始时间戳
+    if (transcode() < 0)                                // 转码开始
         exit_program(1);
     if (do_benchmark) {
-        int64_t utime, stime, rtime;
+        int64_t utime, stime, rtime;                    // 用户时间, 系统时间, 真实时间
         current_time = get_benchmark_time_stamps();
         utime = current_time.user_usec - ti.user_usec;
         stime = current_time.sys_usec  - ti.sys_usec;
