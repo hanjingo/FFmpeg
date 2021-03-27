@@ -337,7 +337,7 @@ typedef struct AVPacketSideData {
  * @see av_packet_ref
  * @see av_packet_unref
  */
-typedef struct AVPacket {
+typedef struct AVPacket {   // 暂存解码之前的媒体数据（一个音/视频帧、一个字幕包等）及附加信息（解码时间戳、显示时间戳、时长等)，主要用于建立缓冲区并装载数据。
     /**
      * A reference to the reference-counted buffer where the packet data is
      * stored.
@@ -359,14 +359,14 @@ typedef struct AVPacket {
      * the packet is decompressed.
      * Can be AV_NOPTS_VALUE if it is not stored in the file.
      */
-    int64_t dts;
-    uint8_t *data;
-    int   size;
-    int   stream_index;
+    int64_t dts;        // 解码时间戳
+    uint8_t *data;      // 数据缓冲区指针
+    int   size;         // data的大小
+    int   stream_index; // 标识该AVPacket所属的视频/音频流
     /**
      * A combination of AV_PKT_FLAG values
      */
-    int   flags;
+    int   flags;        // 标志域的组合，1(AV_PKT_FLAG_KEY)表示该数据是一个关键帧, 2(AV_PKT_FLAG_CORRUPT)表示该数据已经损坏
     /**
      * Additional packet data that can be provided by the container.
      * Packet can contain several types of side information.
@@ -378,9 +378,9 @@ typedef struct AVPacket {
      * Duration of this packet in AVStream->time_base units, 0 if unknown.
      * Equals next_pts - this_pts in presentation order.
      */
-    int64_t duration;
+    int64_t duration;   // 定义包长度
 
-    int64_t pos;                            ///< byte position in stream, -1 if unknown
+    int64_t pos;        // 媒体流的字节偏移量 ///< byte position in stream, -1 if unknown
 
 #if FF_API_CONVERGENCE_DURATION
     /**

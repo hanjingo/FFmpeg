@@ -28,7 +28,7 @@
 #include "avutil.h"
 #include "attributes.h"
 
-typedef struct AVFifoBuffer {
+typedef struct AVFifoBuffer {   // 先入先出缓冲器
     uint8_t *buffer;
     uint8_t *rptr, *wptr, *end;
     uint32_t rndx, wndx;

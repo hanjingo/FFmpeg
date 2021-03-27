@@ -158,7 +158,7 @@ enum AVIODataMarkerType {
  *       when implementing custom I/O. Normally these are set to the
  *       function pointers specified in avio_alloc_context()
  */
-typedef struct AVIOContext {
+typedef struct AVIOContext {    // 输入输出数据
     /**
      * A class for private options.
      *
@@ -223,14 +223,14 @@ typedef struct AVIOContext {
      *               +-------------+----------------------------------------------+
      *
      */
-    unsigned char *buffer;  /**< Start of the buffer. */
-    int buffer_size;        /**< Maximum buffer size */
-    unsigned char *buf_ptr; /**< Current position in the buffer */
-    unsigned char *buf_end; /**< End of the data, may be less than
+    unsigned char *buffer;  // 缓存开始位置          /**< Start of the buffer. */
+    int buffer_size;        // 缓存大小             /**< Maximum buffer size */
+    unsigned char *buf_ptr; // 当前指针读取到的位置   /**< Current position in the buffer */
+    unsigned char *buf_end; // 缓存结束的位置        /**< End of the data, may be less than
                                  buffer+buffer_size if the read function returned
                                  less data than requested, e.g. for streams where
                                  no more data has been received yet. */
-    void *opaque;           /**< A private pointer, passed to the read/write/seek/...
+    void *opaque;           // URLContext结构体    /**< A private pointer, passed to the read/write/seek/...
                                  functions. */
     int (*read_packet)(void *opaque, uint8_t *buf, int buf_size);
     int (*write_packet)(void *opaque, uint8_t *buf, int buf_size);

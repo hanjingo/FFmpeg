@@ -197,9 +197,9 @@ const char *avutil_license(void);
  */
 
 enum AVMediaType {
-    AVMEDIA_TYPE_UNKNOWN = -1,  ///< Usually treated as AVMEDIA_TYPE_DATA
-    AVMEDIA_TYPE_VIDEO,
-    AVMEDIA_TYPE_AUDIO,
+    AVMEDIA_TYPE_UNKNOWN = -1,  // 未知 ///< Usually treated as AVMEDIA_TYPE_DATA
+    AVMEDIA_TYPE_VIDEO,         // 视频
+    AVMEDIA_TYPE_AUDIO,         // 音频
     AVMEDIA_TYPE_DATA,          ///< Opaque data information usually continuous
     AVMEDIA_TYPE_SUBTITLE,
     AVMEDIA_TYPE_ATTACHMENT,    ///< Opaque data information usually sparse
@@ -270,10 +270,10 @@ const char *av_get_media_type_string(enum AVMediaType media_type);
  */
 
 enum AVPictureType {
-    AV_PICTURE_TYPE_NONE = 0, ///< Undefined
-    AV_PICTURE_TYPE_I,     ///< Intra
-    AV_PICTURE_TYPE_P,     ///< Predicted
-    AV_PICTURE_TYPE_B,     ///< Bi-dir predicted
+    AV_PICTURE_TYPE_NONE = 0,   // 未知 ///< Undefined
+    AV_PICTURE_TYPE_I,          // I帧 ///< Intra
+    AV_PICTURE_TYPE_P,          // P帧 ///< Predicted
+    AV_PICTURE_TYPE_B,          // B帧 ///< Bi-dir predicted
     AV_PICTURE_TYPE_S,     ///< S(GMC)-VOP MPEG-4
     AV_PICTURE_TYPE_SI,    ///< Switching Intra
     AV_PICTURE_TYPE_SP,    ///< Switching Predicted

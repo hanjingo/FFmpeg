@@ -522,7 +522,7 @@ static int64_t get_bit_rate(AVCodecContext *ctx)
     return bit_rate;
 }
 
-
+// 编解码器加锁
 static void ff_lock_avcodec(AVCodecContext *log_ctx, const AVCodec *codec)
 {
     if (!(codec->caps_internal & FF_CODEC_CAP_INIT_THREADSAFE) && codec->init)
@@ -546,45 +546,45 @@ int attribute_align_arg ff_codec_open2_recursive(AVCodecContext *avctx, const AV
     ff_lock_avcodec(avctx, codec);
     return ret;
 }
-
+// 开启编解码器codec; avctx:需要初始化的AVCodecContext, codec:指定的编解码器, options:一些选项
 int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *codec, AVDictionary **options)
 {
     int ret = 0;
     int codec_init_ok = 0;
     AVDictionary *tmp = NULL;
     const AVPixFmtDescriptor *pixdesc;
-    AVCodecInternal *avci;
+    AVCodecInternal *avci;                                  // 内部编解码器
 
-    if (avcodec_is_open(avctx))
+    if (avcodec_is_open(avctx))                             // 如果已经打开了，直接返回
         return 0;
 
-    if (!codec && !avctx->codec) {
+    if (!codec && !avctx->codec) {                          // 如果没有指定编解码器，直接返回
         av_log(avctx, AV_LOG_ERROR, "No codec provided to avcodec_open2()\n");
         return AVERROR(EINVAL);
     }
-    if (codec && avctx->codec && codec != avctx->codec) {
+    if (codec && avctx->codec && codec != avctx->codec) {   // 如果指定的编解码与avctx里的编解码器不同
         av_log(avctx, AV_LOG_ERROR, "This AVCodecContext was allocated for %s, "
                                     "but %s passed to avcodec_open2()\n", avctx->codec->name, codec->name);
         return AVERROR(EINVAL);
     }
-    if (!codec)
+    if (!codec)                                             // 如果codec没有指定，就用avctx的编解码器
         codec = avctx->codec;
-
+    // 检查外部数据大小是否合法
     if (avctx->extradata_size < 0 || avctx->extradata_size >= FF_MAX_EXTRADATA_SIZE)
         return AVERROR(EINVAL);
 
-    if (options)
+    if (options)                                            // 如果设置了选项，先存到tmp
         av_dict_copy(&tmp, *options, 0);
 
-    ff_lock_avcodec(avctx, codec);
+    ff_lock_avcodec(avctx, codec);                          // 加锁
 
-    avci = av_mallocz(sizeof(*avci));
+    avci = av_mallocz(sizeof(*avci));                       // 分配编解码器内存空间
     if (!avci) {
         ret = AVERROR(ENOMEM);
         goto end;
     }
     avctx->internal = avci;
-
+    // 分配空间
     avci->to_free = av_frame_alloc();
     avci->compat_decode_frame = av_frame_alloc();
     avci->compat_encode_packet = av_packet_alloc();
@@ -620,9 +620,9 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
     } else {
         avctx->priv_data = NULL;
     }
-    if ((ret = av_opt_set_dict(avctx, &tmp)) < 0)
+    if ((ret = av_opt_set_dict(avctx, &tmp)) < 0)       // 设置编解码器选项
         goto free_and_end;
-
+    // 判断下codec是否在白名单
     if (avctx->codec_whitelist && av_match_list(codec->name, avctx->codec_whitelist, ',') <= 0) {
         av_log(avctx, AV_LOG_ERROR, "Codec (%s) not on whitelist \'%s\'\n", codec->name, avctx->codec_whitelist);
         ret = AVERROR(EINVAL);
@@ -639,14 +639,14 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
         if (ret < 0)
             goto free_and_end;
     }
-
+    // 检查宽和高
     if ((avctx->coded_width || avctx->coded_height || avctx->width || avctx->height)
         && (  av_image_check_size2(avctx->coded_width, avctx->coded_height, avctx->max_pixels, AV_PIX_FMT_NONE, 0, avctx) < 0
            || av_image_check_size2(avctx->width,       avctx->height,       avctx->max_pixels, AV_PIX_FMT_NONE, 0, avctx) < 0)) {
         av_log(avctx, AV_LOG_WARNING, "Ignoring invalid width/height values\n");
         ff_set_dimensions(avctx, 0, 0);
     }
-
+    // 检查宽高比
     if (avctx->width > 0 && avctx->height > 0) {
         if (av_image_check_sar(avctx->width, avctx->height,
                                avctx->sample_aspect_ratio) < 0) {
@@ -659,28 +659,28 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
 
     /* if the decoder init function was already called previously,
      * free the already allocated subtitle_header before overwriting it */
-    if (av_codec_is_decoder(codec))
+    if (av_codec_is_decoder(codec))                 // 如果是解码器，先释放掉subtitle_header
         av_freep(&avctx->subtitle_header);
 
-    if (avctx->channels > FF_SANE_NB_CHANNELS || avctx->channels < 0) {
+    if (avctx->channels > FF_SANE_NB_CHANNELS || avctx->channels < 0) { // 判断通道是否过多
         av_log(avctx, AV_LOG_ERROR, "Too many or invalid channels: %d\n", avctx->channels);
         ret = AVERROR(EINVAL);
         goto free_and_end;
     }
-    if (avctx->sample_rate < 0) {
+    if (avctx->sample_rate < 0) {                   // 采样率是否合格
         av_log(avctx, AV_LOG_ERROR, "Invalid sample rate: %d\n", avctx->sample_rate);
         ret = AVERROR(EINVAL);
         goto free_and_end;
     }
-    if (avctx->block_align < 0) {
+    if (avctx->block_align < 0) {                   // 块是否对齐
         av_log(avctx, AV_LOG_ERROR, "Invalid block align: %d\n", avctx->block_align);
         ret = AVERROR(EINVAL);
         goto free_and_end;
     }
 
-    avctx->codec = codec;
+    avctx->codec = codec;                           // 设置context的编解码器
     if ((avctx->codec_type == AVMEDIA_TYPE_UNKNOWN || avctx->codec_type == codec->type) &&
-        avctx->codec_id == AV_CODEC_ID_NONE) {
+        avctx->codec_id == AV_CODEC_ID_NONE) {      // 将context与codec的编解码器类型和id一致化
         avctx->codec_type = codec->type;
         avctx->codec_id   = codec->id;
     }
@@ -692,7 +692,7 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
     }
     avctx->frame_number = 0;
     avctx->codec_descriptor = avcodec_descriptor_get(avctx->codec_id);
-
+    // 检查编码器是否处于“实验阶段”
     if ((avctx->codec->capabilities & AV_CODEC_CAP_EXPERIMENTAL) &&
         avctx->strict_std_compliance > FF_COMPLIANCE_EXPERIMENTAL) {
         const char *codec_string = av_codec_is_encoder(codec) ? "encoder" : "decoder";
@@ -731,7 +731,7 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
         if (ret < 0)
             goto free_and_end;
     }
-
+    // 初始化线程
     if (HAVE_THREADS
         && !(avci->frame_thread_encoder && (avctx->active_thread_type&FF_THREAD_FRAME))) {
         ret = ff_thread_init(avctx);
@@ -747,7 +747,7 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
                avctx->codec->max_lowres);
         avctx->lowres = avctx->codec->max_lowres;
     }
-
+    // 如果是编码器，检查输入参数是否符合要求
     if (av_codec_is_encoder(avctx->codec)) {
         int i;
 #if FF_API_CODED_FRAME
@@ -766,9 +766,9 @@ FF_ENABLE_DEPRECATION_WARNINGS
             goto free_and_end;
         }
 
-        if (avctx->codec->sample_fmts) {
-            for (i = 0; avctx->codec->sample_fmts[i] != AV_SAMPLE_FMT_NONE; i++) {
-                if (avctx->sample_fmt == avctx->codec->sample_fmts[i])
+        if (avctx->codec->sample_fmts) {    // 如果包含采样率参数(表明是音频)，检查采样率是否符合要求
+            for (i = 0; avctx->codec->sample_fmts[i] != AV_SAMPLE_FMT_NONE; i++) {  // 遍历编码器支持的所有采样率
+                if (avctx->sample_fmt == avctx->codec->sample_fmts[i])              // 如果设置的采样率==编码器支持的采样率，跳出循环
                     break;
                 if (avctx->channels == 1 &&
                     av_get_planar_sample_fmt(avctx->sample_fmt) ==
@@ -777,7 +777,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
                     break;
                 }
             }
-            if (avctx->codec->sample_fmts[i] == AV_SAMPLE_FMT_NONE) {
+            if (avctx->codec->sample_fmts[i] == AV_SAMPLE_FMT_NONE) {               // 再次检查采样率是否正确
                 char buf[128];
                 snprintf(buf, sizeof(buf), "%d", avctx->sample_fmt);
                 av_log(avctx, AV_LOG_ERROR, "Specified sample format %s is invalid or not supported\n",
@@ -786,7 +786,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
                 goto free_and_end;
             }
         }
-        if (avctx->codec->pix_fmts) {
+        if (avctx->codec->pix_fmts) {   // 检查像素格式
             for (i = 0; avctx->codec->pix_fmts[i] != AV_PIX_FMT_NONE; i++)
                 if (avctx->pix_fmt == avctx->codec->pix_fmts[i])
                     break;
@@ -807,7 +807,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
                 avctx->codec->pix_fmts[i] == AV_PIX_FMT_YUVJ444P)
                 avctx->color_range = AVCOL_RANGE_JPEG;
         }
-        if (avctx->codec->supported_samplerates) {
+        if (avctx->codec->supported_samplerates) {  // 检查采样率
             for (i = 0; avctx->codec->supported_samplerates[i] != 0; i++)
                 if (avctx->sample_rate == avctx->codec->supported_samplerates[i])
                     break;
@@ -824,7 +824,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
             ret = AVERROR(EINVAL);
             goto free_and_end;
         }
-        if (avctx->codec->channel_layouts) {
+        if (avctx->codec->channel_layouts) {    // 检查声道布局
             if (!avctx->channel_layout) {
                 av_log(avctx, AV_LOG_WARNING, "Channel layout not specified\n");
             } else {
@@ -840,7 +840,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
                 }
             }
         }
-        if (avctx->channel_layout && avctx->channels) {
+        if (avctx->channel_layout && avctx->channels) { // 检查声道数
             int channels = av_get_channel_layout_nb_channels(avctx->channel_layout);
             if (channels != avctx->channels) {
                 char buf[512];
@@ -860,7 +860,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
             ret = AVERROR(EINVAL);
             goto free_and_end;
         }
-        if(avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+        if(avctx->codec_type == AVMEDIA_TYPE_VIDEO) {   // 设置深度，检查宽高
             pixdesc = av_pix_fmt_desc_get(avctx->pix_fmt);
             if (    avctx->bits_per_raw_sample < 0
                 || (avctx->bits_per_raw_sample > 8 && pixdesc->comp[0].depth <= 8)) {
@@ -875,7 +875,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
             }
         }
         if (   (avctx->codec_type == AVMEDIA_TYPE_VIDEO || avctx->codec_type == AVMEDIA_TYPE_AUDIO)
-            && avctx->bit_rate>0 && avctx->bit_rate<1000) {
+            && avctx->bit_rate>0 && avctx->bit_rate<1000) { // 检查码率
             av_log(avctx, AV_LOG_WARNING, "Bitrate %"PRId64" is extremely low, maybe you mean %"PRId64"k\n", avctx->bit_rate, avctx->bit_rate);
         }
 
@@ -938,12 +938,12 @@ FF_ENABLE_DEPRECATION_WARNINGS
     }
 
     ret=0;
-
+    // 如果是解码器,检查参数
     if (av_codec_is_decoder(avctx->codec)) {
         if (!avctx->bit_rate)
             avctx->bit_rate = get_bit_rate(avctx);
         /* validate channel layout from the decoder */
-        if (avctx->channel_layout) {
+        if (avctx->channel_layout) {    // 检查声道布局
             int channels = av_get_channel_layout_nb_channels(avctx->channel_layout);
             if (!avctx->channels)
                 avctx->channels = channels;
@@ -967,7 +967,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
             goto free_and_end;
         }
         if (avctx->sub_charenc) {
-            if (avctx->codec_type != AVMEDIA_TYPE_SUBTITLE) {
+            if (avctx->codec_type != AVMEDIA_TYPE_SUBTITLE) {   // 检查解码器支持的类型
                 av_log(avctx, AV_LOG_ERROR, "Character encoding is only "
                        "supported with subtitles codecs\n");
                 ret = AVERROR(EINVAL);
@@ -1014,7 +1014,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
     }
 
 end:
-    ff_unlock_avcodec(codec);
+    ff_unlock_avcodec(codec);                                   // 解锁
     if (options) {
         av_dict_free(options);
         *options = tmp;
@@ -1130,7 +1130,7 @@ void avsubtitle_free(AVSubtitle *sub)
     memset(sub, 0, sizeof(*sub));
 }
 
-av_cold int avcodec_close(AVCodecContext *avctx)
+av_cold int avcodec_close(AVCodecContext *avctx) // 关闭编解码器
 {
     int i;
 

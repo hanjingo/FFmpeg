@@ -154,7 +154,7 @@ int audio_sync_method = 0;
 int video_sync_method = VSYNC_AUTO;
 float frame_drop_threshold = 0;
 int do_deinterlace    = 0;
-int do_benchmark      = 0;
+int do_benchmark      = 0;  // 是否开启性能测试
 int do_benchmark_all  = 0;
 int do_hex_dump       = 0;
 int do_pkt_dump       = 0;
@@ -3313,7 +3313,7 @@ static int open_files(OptionGroupList *l, const char *inout,
 
     return 0;
 }
-
+// 解析输入选项
 int ffmpeg_parse_options(int argc, char **argv)
 {
     OptionParseContext octx;

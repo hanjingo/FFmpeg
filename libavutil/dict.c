@@ -68,7 +68,7 @@ AVDictionaryEntry *av_dict_get(const AVDictionary *m, const char *key,
 }
 
 int av_dict_set(AVDictionary **pm, const char *key, const char *value,
-                int flags)
+                int flags)  // 设置字典值
 {
     AVDictionary *m = *pm;
     AVDictionaryEntry *tag = NULL;

@@ -28,8 +28,8 @@
 #include "version.h"
 
 /* (de)muxers */
-extern AVOutputFormat ff_a64_muxer;
-extern AVInputFormat  ff_aa_demuxer;
+extern AVOutputFormat ff_a64_muxer;     // 复用器
+extern AVInputFormat  ff_aa_demuxer;    // 解复用器
 extern AVInputFormat  ff_aac_demuxer;
 extern AVInputFormat  ff_aax_demuxer;
 extern AVInputFormat  ff_ac3_demuxer;
@@ -527,10 +527,10 @@ extern AVInputFormat  ff_vapoursynth_demuxer;
 #include "libavformat/muxer_list.c"
 #include "libavformat/demuxer_list.c"
 
-static const AVInputFormat * const *indev_list = NULL;
-static const AVOutputFormat * const *outdev_list = NULL;
+static const AVInputFormat * const *indev_list = NULL;      // 复用器链表的入口
+static const AVOutputFormat * const *outdev_list = NULL;    // 解复用器链表的入口
 
-const AVOutputFormat *av_muxer_iterate(void **opaque)
+const AVOutputFormat *av_muxer_iterate(void **opaque) // 遍历混流器
 {
     static const uintptr_t size = sizeof(muxer_list)/sizeof(muxer_list[0]) - 1;
     uintptr_t i = (uintptr_t)*opaque;
@@ -547,7 +547,7 @@ const AVOutputFormat *av_muxer_iterate(void **opaque)
     return f;
 }
 
-const AVInputFormat *av_demuxer_iterate(void **opaque)
+const AVInputFormat *av_demuxer_iterate(void **opaque) // 遍历分流器
 {
     static const uintptr_t size = sizeof(demuxer_list)/sizeof(demuxer_list[0]) - 1;
     uintptr_t i = (uintptr_t)*opaque;
@@ -564,18 +564,18 @@ const AVInputFormat *av_demuxer_iterate(void **opaque)
     return f;
 }
 
-static AVMutex avpriv_register_devices_mutex = AV_MUTEX_INITIALIZER;
+static AVMutex avpriv_register_devices_mutex = AV_MUTEX_INITIALIZER; // 添加组件时的锁
 
 #if FF_API_NEXT
 FF_DISABLE_DEPRECATION_WARNINGS
 static AVOnce av_format_next_init = AV_ONCE_INIT;
 
-static void av_format_init_next(void)
+static void av_format_init_next(void) // 用链表存储注册的组件(编解码器...)
 {
     AVOutputFormat *prevout = NULL, *out;
     AVInputFormat *previn = NULL, *in;
 
-    ff_mutex_lock(&avpriv_register_devices_mutex);
+    ff_mutex_lock(&avpriv_register_devices_mutex);      // 加锁
 
     for (int i = 0; (out = (AVOutputFormat*)muxer_list[i]); i++) {
         if (prevout)
@@ -605,10 +605,10 @@ static void av_format_init_next(void)
         }
     }
 
-    ff_mutex_unlock(&avpriv_register_devices_mutex);
+    ff_mutex_unlock(&avpriv_register_devices_mutex);    // 解锁
 }
 
-AVInputFormat *av_iformat_next(const AVInputFormat *f)
+AVInputFormat *av_iformat_next(const AVInputFormat *f) // 找到InputFormat的下一个
 {
     ff_thread_once(&av_format_next_init, av_format_init_next);
 
@@ -624,7 +624,7 @@ AVInputFormat *av_iformat_next(const AVInputFormat *f)
     }
 }
 
-AVOutputFormat *av_oformat_next(const AVOutputFormat *f)
+AVOutputFormat *av_oformat_next(const AVOutputFormat *f) // 找到OutputFormat的下一个
 {
     ff_thread_once(&av_format_next_init, av_format_init_next);
 
@@ -640,17 +640,17 @@ AVOutputFormat *av_oformat_next(const AVOutputFormat *f)
     }
 }
 
-void av_register_all(void)
+void av_register_all(void) // 遍历添加注册复用器，编码器...
 {
     ff_thread_once(&av_format_next_init, av_format_init_next);
 }
 
-void av_register_input_format(AVInputFormat *format)
+void av_register_input_format(AVInputFormat *format) // 遍历添加InputFormat
 {
     ff_thread_once(&av_format_next_init, av_format_init_next);
 }
 
-void av_register_output_format(AVOutputFormat *format)
+void av_register_output_format(AVOutputFormat *format) // 遍历添加OutputFormat
 {
     ff_thread_once(&av_format_next_init, av_format_init_next);
 }

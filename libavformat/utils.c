@@ -4977,7 +4977,7 @@ int avformat_query_codec(const AVOutputFormat *ofmt, enum AVCodecID codec_id,
     return AVERROR_PATCHWELCOME;
 }
 
-int avformat_network_init(void)
+int avformat_network_init(void) // 初始化网络
 {
 #if CONFIG_NETWORK
     int ret;

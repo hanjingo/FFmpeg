@@ -305,7 +305,7 @@ typedef struct AVRegionOfInterest {
  * C structure field name for fields accessible through AVOptions. The AVClass
  * for AVFrame can be obtained from avcodec_get_frame_class()
  */
-typedef struct AVFrame {
+typedef struct AVFrame {    // 帧结构,用于存储原始数据
 #define AV_NUM_DATA_POINTERS 8
     /**
      * pointer to the picture/channel planes.
@@ -319,7 +319,7 @@ typedef struct AVFrame {
      * NOTE: Except for hwaccel formats, pointers not needed by the format
      * MUST be set to NULL.
      */
-    uint8_t *data[AV_NUM_DATA_POINTERS];
+    uint8_t *data[AV_NUM_DATA_POINTERS];    // 解码后的原始数据(对视频来说是YUV，RGB，对音频来说是PCM);FFMpeg内部以平面的方式存储原始图像数据，即将图像像素分为多个平面（R/G/B或Y/U/V）数组
 
     /**
      * For video, size in bytes of each picture line.
@@ -336,7 +336,7 @@ typedef struct AVFrame {
      * @note The linesize may be larger than the size of usable data -- there
      * may be extra padding present for performance reasons.
      */
-    int linesize[AV_NUM_DATA_POINTERS];
+    int linesize[AV_NUM_DATA_POINTERS];     // data中"每行"数据长度,大于等于图像的宽,小于等于8
 
     /**
      * pointers to the data planes/channels.
@@ -352,7 +352,7 @@ typedef struct AVFrame {
      * but for planar audio with more channels that can fit in data,
      * extended_data must be used in order to access all channels.
      */
-    uint8_t **extended_data;
+    uint8_t **extended_data;                // ？？
 
     /**
      * @name Video dimensions
@@ -363,7 +363,7 @@ typedef struct AVFrame {
      * restricted by the @ref cropping "Cropping rectangle".
      * @{
      */
-    int width, height;
+    int width, height;                      // 视频帧宽，帧高(例:1920x1080)
     /**
      * @}
      */
@@ -371,34 +371,34 @@ typedef struct AVFrame {
     /**
      * number of audio samples (per channel) described by this frame
      */
-    int nb_samples;
+    int nb_samples;                         // 音频的采样数量
 
     /**
      * format of the frame, -1 if unknown or unset
      * Values correspond to enum AVPixelFormat for video frames,
      * enum AVSampleFormat for audio)
      */
-    int format;
+    int format;                             // 帧的像素格式
 
     /**
      * 1 -> keyframe, 0-> not
      */
-    int key_frame;
+    int key_frame;                          // 是否是关键帧,1.是,0.否;由libavcodec设置
 
     /**
      * Picture type of the frame.
      */
-    enum AVPictureType pict_type;
+    enum AVPictureType pict_type;           // 帧类型(I帧,B帧,P帧)
 
     /**
      * Sample aspect ratio for the video frame, 0/1 if unknown/unspecified.
      */
-    AVRational sample_aspect_ratio;
+    AVRational sample_aspect_ratio;         // 宽高比(例:16:9)
 
     /**
      * Presentation timestamp in time_base units (time when frame should be shown to user).
      */
-    int64_t pts;
+    int64_t pts;                            // 显示时间戳
 
 #if FF_API_PKT_PTS
     /**
@@ -419,21 +419,21 @@ typedef struct AVFrame {
     /**
      * picture number in bitstream order
      */
-    int coded_picture_number;
+    int coded_picture_number;               // 编码帧序号
     /**
      * picture number in display order
      */
-    int display_picture_number;
+    int display_picture_number;             // 显示帧序号
 
     /**
      * quality (between 1 (good) and FF_LAMBDA_MAX (bad))
      */
-    int quality;
+    int quality;                            // 帧质量;1:好,FF_LAMBDA_MAX:不好
 
     /**
      * for some private data of the user
      */
-    void *opaque;
+    void *opaque;                           // 私密数据
 
 #if FF_API_ERROR_FRAME
     /**
@@ -477,12 +477,12 @@ typedef struct AVFrame {
     /**
      * Sample rate of the audio data.
      */
-    int sample_rate;
+    int sample_rate;                    // 音频采样率
 
     /**
      * Channel layout of the audio data.
      */
-    uint64_t channel_layout;
+    uint64_t channel_layout;            // 声道布局
 
     /**
      * AVBuffer references backing the data for this frame. If all elements of
@@ -627,7 +627,7 @@ typedef struct AVFrame {
      * QP table
      */
     attribute_deprecated
-    int8_t *qscale_table;
+    int8_t *qscale_table;   // QP表,指向一块内存，里面存储的是每个宏块的QP值
     /**
      * QP store stride
      */

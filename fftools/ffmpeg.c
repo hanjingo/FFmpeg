@@ -147,15 +147,15 @@ static uint8_t *subtitle_out;
 InputStream **input_streams = NULL;
 int        nb_input_streams = 0;
 InputFile   **input_files   = NULL;     // 输入源数组
-int        nb_input_files   = 0;        // 输入源数量
+int        nb_input_files   = 0;        // 输入源数组长度
 
 OutputStream **output_streams = NULL;
 int         nb_output_streams = 0;
 OutputFile   **output_files   = NULL;   // 输出源数组
-int         nb_output_files   = 0;      // 输出源个数
+int         nb_output_files   = 0;      // 输出源数组长度
 
-FilterGraph **filtergraphs;
-int        nb_filtergraphs;
+FilterGraph **filtergraphs;             // 图像滤镜数组
+int        nb_filtergraphs;             // 图像滤镜数组长度
 
 #if HAVE_TERMIOS_H
 
@@ -488,7 +488,7 @@ static int decode_interrupt_cb(void *ctx)
 
 const AVIOInterruptCB int_cb = { decode_interrupt_cb, NULL };
 
-static void ffmpeg_cleanup(int ret)
+static void ffmpeg_cleanup(int ret) // ffmpeg退出时清理函数
 {
     int i, j;
 
@@ -497,14 +497,14 @@ static void ffmpeg_cleanup(int ret)
         av_log(NULL, AV_LOG_INFO, "bench: maxrss=%ikB\n", maxrss);
     }
 
-    for (i = 0; i < nb_filtergraphs; i++) {
+    for (i = 0; i < nb_filtergraphs; i++) {                 // 遍历图像过滤器数组,释放图像过滤器
         FilterGraph *fg = filtergraphs[i];
         avfilter_graph_free(&fg->graph);
-        for (j = 0; j < fg->nb_inputs; j++) {
+        for (j = 0; j < fg->nb_inputs; j++) {               // 遍历处理输入流
             InputFilter *ifilter = fg->inputs[j];
             struct InputStream *ist = ifilter->ist;
 
-            while (av_fifo_size(ifilter->frame_queue)) {
+            while (av_fifo_size(ifilter->frame_queue)) {    // 遍历读取帧队列的帧内容并释放帧
                 AVFrame *frame;
                 av_fifo_generic_read(ifilter->frame_queue, &frame,
                                      sizeof(frame), NULL);
@@ -525,7 +525,7 @@ static void ffmpeg_cleanup(int ret)
             av_freep(&fg->inputs[j]);
         }
         av_freep(&fg->inputs);
-        for (j = 0; j < fg->nb_outputs; j++) {
+        for (j = 0; j < fg->nb_outputs; j++) {              // 遍历处理输出流
             OutputFilter *ofilter = fg->outputs[j];
 
             avfilter_inout_free(&ofilter->out_tmp);
@@ -545,7 +545,7 @@ static void ffmpeg_cleanup(int ret)
     av_freep(&subtitle_out);
 
     /* close files */
-    for (i = 0; i < nb_output_files; i++) {
+    for (i = 0; i < nb_output_files; i++) {                 // 遍历关闭输出文件
         OutputFile *of = output_files[i];
         AVFormatContext *s;
         if (!of)
@@ -1391,7 +1391,7 @@ static void do_video_stats(OutputStream *ost, int frame_size)
 }
 
 static int init_output_stream(OutputStream *ost, char *error, int error_len);
-
+// 对初始化输出流函数的封装
 static int init_output_stream_wrapper(OutputStream *ost, unsigned int fatal)
 {
     int ret = AVERROR_BUG;
@@ -2873,7 +2873,7 @@ static int get_buffer(AVCodecContext *s, AVFrame *frame, int flags)
 
     return avcodec_default_get_buffer2(s, frame, flags);
 }
-
+// 初始化输入流
 static int init_input_stream(int ist_index, char *error, int error_len)
 {
     int ret;
@@ -2892,34 +2892,34 @@ static int init_input_stream(int ist_index, char *error, int error_len)
         ist->dec_ctx->get_buffer2           = get_buffer;
         ist->dec_ctx->thread_safe_callbacks = 1;
 
-        av_opt_set_int(ist->dec_ctx, "refcounted_frames", 1, 0);
+        av_opt_set_int(ist->dec_ctx, "refcounted_frames", 1, 0);    // 帧统计数量重置为1
         if (ist->dec_ctx->codec_id == AV_CODEC_ID_DVB_SUBTITLE &&
            (ist->decoding_needed & DECODING_FOR_OST)) {
-            av_dict_set(&ist->decoder_opts, "compute_edt", "1", AV_DICT_DONT_OVERWRITE);
-            if (ist->decoding_needed & DECODING_FOR_FILTER)
+            av_dict_set(&ist->decoder_opts, "compute_edt", "1", AV_DICT_DONT_OVERWRITE);    // 设置解码器的选项compute_edt值为1，且不允许再被修改
+            if (ist->decoding_needed & DECODING_FOR_FILTER)         // 不支持过滤器解码
                 av_log(NULL, AV_LOG_WARNING, "Warning using DVB subtitles for filtering and output at the same time is not fully supported, also see -compute_edt [0|1]\n");
         }
 
-        av_dict_set(&ist->decoder_opts, "sub_text_format", "ass", AV_DICT_DONT_OVERWRITE);
+        av_dict_set(&ist->decoder_opts, "sub_text_format", "ass", AV_DICT_DONT_OVERWRITE);  // 设置解码器的选项sub_text_format值为ass, 且不允许再被修改
 
         /* Useful for subtitles retiming by lavf (FIXME), skipping samples in
          * audio, and video decoders such as cuvid or mediacodec */
-        ist->dec_ctx->pkt_timebase = ist->st->time_base;
+        ist->dec_ctx->pkt_timebase = ist->st->time_base;            // 将输入流的时间基赋值给解码器的pkt时间基
 
-        if (!av_dict_get(ist->decoder_opts, "threads", NULL, 0))
+        if (!av_dict_get(ist->decoder_opts, "threads", NULL, 0))    // 如果解码器没有设置多线程选项,则设置为自动
             av_dict_set(&ist->decoder_opts, "threads", "auto", 0);
         /* Attached pics are sparse, therefore we would not want to delay their decoding till EOF. */
-        if (ist->st->disposition & AV_DISPOSITION_ATTACHED_PIC)
+        if (ist->st->disposition & AV_DISPOSITION_ATTACHED_PIC)     // ??
             av_dict_set(&ist->decoder_opts, "threads", "1", 0);
 
-        ret = hw_device_setup_for_decode(ist);
+        ret = hw_device_setup_for_decode(ist);                      // ??
         if (ret < 0) {
             snprintf(error, error_len, "Device setup failed for "
                      "decoder on input stream #%d:%d : %s",
                      ist->file_index, ist->st->index, av_err2str(ret));
             return ret;
         }
-
+        // 开启编解码器codec并初始化 
         if ((ret = avcodec_open2(ist->dec_ctx, codec, &ist->decoder_opts)) < 0) {
             if (ret == AVERROR_EXPERIMENTAL)
                 abort_codec_experimental(codec, 0);
@@ -3181,7 +3181,7 @@ static void set_encoder_id(OutputFile *of, OutputStream *ost)
     av_dict_set(&ost->st->metadata, "encoder",  encoder_string,
                 AV_DICT_DONT_STRDUP_VAL | AV_DICT_DONT_OVERWRITE);
 }
-
+// 解析关键帧,计算并排序pts时间戳;
 static void parse_forced_key_frames(char *kf, OutputStream *ost,
                                     AVCodecContext *avctx)
 {
@@ -3193,7 +3193,7 @@ static void parse_forced_key_frames(char *kf, OutputStream *ost,
         if (*p == ',')
             n++;
     size = n;
-    pts = av_malloc_array(size, sizeof(*pts));
+    pts = av_malloc_array(size, sizeof(*pts));                      // 定义pts数组,用来存储基于各种时间基的时间戳并排序
     if (!pts) {
         av_log(NULL, AV_LOG_FATAL, "Could not allocate forced key frames array.\n");
         exit_program(1);
@@ -3219,20 +3219,20 @@ static void parse_forced_key_frames(char *kf, OutputStream *ost,
                 exit_program(1);
             }
             t = p[8] ? parse_time_or_die("force_key_frames", p + 8, 1) : 0;
-            t = av_rescale_q(t, AV_TIME_BASE_Q, avctx->time_base);
+            t = av_rescale_q(t, AV_TIME_BASE_Q, avctx->time_base);              // 调整时间基为AV_TIME_BASE_Q
 
             for (j = 0; j < avf->nb_chapters; j++) {
                 AVChapter *c = avf->chapters[j];
                 av_assert1(index < size);
                 pts[index++] = av_rescale_q(c->start, c->time_base,
-                                            avctx->time_base) + t;
+                                            avctx->time_base) + t;              // 调整时间基为章节的时间基
             }
 
         } else {
 
             t = parse_time_or_die("force_key_frames", p, 1);
             av_assert1(index < size);
-            pts[index++] = av_rescale_q(t, AV_TIME_BASE_Q, avctx->time_base);
+            pts[index++] = av_rescale_q(t, AV_TIME_BASE_Q, avctx->time_base);   // 调整时间基为AV_TIME_BASE_Q
 
         }
 
@@ -3244,7 +3244,7 @@ static void parse_forced_key_frames(char *kf, OutputStream *ost,
     ost->forced_kf_count = size;
     ost->forced_kf_pts   = pts;
 }
-
+// 用输入流的时间基来初始化编码器时间基
 static void init_encoder_time_base(OutputStream *ost, AVRational default_time_base)
 {
     InputStream *ist = get_input_stream(ost);
@@ -3268,7 +3268,7 @@ static void init_encoder_time_base(OutputStream *ost, AVRational default_time_ba
 
     enc_ctx->time_base = default_time_base;
 }
-
+// 初始化输出流的编码
 static int init_output_stream_encode(OutputStream *ost)
 {
     InputStream *ist = get_input_stream(ost);
@@ -3277,7 +3277,7 @@ static int init_output_stream_encode(OutputStream *ost)
     AVFormatContext *oc = output_files[ost->file_index]->ctx;
     int j, ret;
 
-    set_encoder_id(output_files[ost->file_index], ost);
+    set_encoder_id(output_files[ost->file_index], ost); // 设置编码器id
 
     // Muxers use AV_PKT_DATA_DISPLAYMATRIX to signal rotation. On the other
     // hand, the legacy API makes demuxers set "rotate" metadata entries,
@@ -3302,7 +3302,7 @@ static int init_output_stream_encode(OutputStream *ost)
                 ost->st->disposition = AV_DISPOSITION_DEFAULT;
     }
 
-    if (enc_ctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+    if (enc_ctx->codec_type == AVMEDIA_TYPE_VIDEO) {    // 如果是视频编码器,设置帧率,
         if (!ost->frame_rate.num)
             ost->frame_rate = av_buffersink_get_frame_rate(ost->filter->filter);
         if (ist && !ost->frame_rate.num)
@@ -3324,26 +3324,26 @@ static int init_output_stream_encode(OutputStream *ost)
             ost->frame_rate = ost->enc->supported_framerates[idx];
         }
         // reduce frame rate for mpeg4 to be within the spec limits
-        if (enc_ctx->codec_id == AV_CODEC_ID_MPEG4) {
+        if (enc_ctx->codec_id == AV_CODEC_ID_MPEG4) {   // 如果是mpeg4编解码器，降帧处理
             av_reduce(&ost->frame_rate.num, &ost->frame_rate.den,
                       ost->frame_rate.num, ost->frame_rate.den, 65535);
         }
     }
 
     switch (enc_ctx->codec_type) {
-    case AVMEDIA_TYPE_AUDIO:
+    case AVMEDIA_TYPE_AUDIO:    // 音频编码器
         enc_ctx->sample_fmt     = av_buffersink_get_format(ost->filter->filter);
         if (dec_ctx)
             enc_ctx->bits_per_raw_sample = FFMIN(dec_ctx->bits_per_raw_sample,
                                                  av_get_bytes_per_sample(enc_ctx->sample_fmt) << 3);
-        enc_ctx->sample_rate    = av_buffersink_get_sample_rate(ost->filter->filter);
-        enc_ctx->channel_layout = av_buffersink_get_channel_layout(ost->filter->filter);
-        enc_ctx->channels       = av_buffersink_get_channels(ost->filter->filter);
+        enc_ctx->sample_rate    = av_buffersink_get_sample_rate(ost->filter->filter);       // 设置采样率
+        enc_ctx->channel_layout = av_buffersink_get_channel_layout(ost->filter->filter);    // 设置声道布局
+        enc_ctx->channels       = av_buffersink_get_channels(ost->filter->filter);          // 设置声道
 
-        init_encoder_time_base(ost, av_make_q(1, enc_ctx->sample_rate));
+        init_encoder_time_base(ost, av_make_q(1, enc_ctx->sample_rate));                    // 用输入流的时间基来初始化编码器时间基
         break;
 
-    case AVMEDIA_TYPE_VIDEO:
+    case AVMEDIA_TYPE_VIDEO:    // 视频编码器
         init_encoder_time_base(ost, av_inv_q(ost->frame_rate));
 
         if (!(enc_ctx->time_base.num && enc_ctx->time_base.den))
@@ -3422,7 +3422,7 @@ static int init_output_stream_encode(OutputStream *ost)
 
     return 0;
 }
-
+// 初始化输出流
 static int init_output_stream(OutputStream *ost, char *error, int error_len)
 {
     int ret = 0;
@@ -3627,8 +3627,8 @@ static void report_new_stream(int input_index, AVPacket *pkt)
            pkt->pos, av_ts2timestr(pkt->dts, &st->time_base));
     file->nb_streams_warn = pkt->stream_index + 1;
 }
-
-static int transcode_init(void) // 转码初始化
+// 转码初始化
+static int transcode_init(void)
 {
     int ret = 0, i, j, k;
     AVFormatContext *oc;
@@ -3636,7 +3636,7 @@ static int transcode_init(void) // 转码初始化
     InputStream *ist;
     char error[1024] = {0};
 
-    for (i = 0; i < nb_filtergraphs; i++) {
+    for (i = 0; i < nb_filtergraphs; i++) {     // 给每个滤镜设置输入源
         FilterGraph *fg = filtergraphs[i];
         for (j = 0; j < fg->nb_outputs; j++) {
             OutputFilter *ofilter = fg->outputs[j];
@@ -3652,7 +3652,7 @@ static int transcode_init(void) // 转码初始化
     }
 
     /* init framerate emulation */
-    for (i = 0; i < nb_input_files; i++) {
+    for (i = 0; i < nb_input_files; i++) {      // 初始化帧率
         InputFile *ifile = input_files[i];
         if (ifile->rate_emu)
             for (j = 0; j < ifile->nb_streams; j++)
@@ -3660,17 +3660,17 @@ static int transcode_init(void) // 转码初始化
     }
 
     /* init input streams */
-    for (i = 0; i < nb_input_streams; i++)
+    for (i = 0; i < nb_input_streams; i++)      // 初始化输入流
         if ((ret = init_input_stream(i, error, sizeof(error))) < 0) {
             for (i = 0; i < nb_output_streams; i++) {
                 ost = output_streams[i];
-                avcodec_close(ost->enc_ctx);
+                avcodec_close(ost->enc_ctx);    // 关闭每个输出流的编解码器
             }
             goto dump_format;
         }
 
     /* open each encoder */
-    for (i = 0; i < nb_output_streams; i++) {
+    for (i = 0; i < nb_output_streams; i++) {   // 
         // skip streams fed from filtergraphs until we have a frame for them
         if (output_streams[i]->filter)
             continue;
@@ -3831,7 +3831,7 @@ static int need_output(void)
  *
  * @return  selected output stream, or NULL if none available
  */
-static OutputStream *choose_output(void)
+static OutputStream *choose_output(void) // 选择输出流
 {
     int i;
     int64_t opts_min = INT64_MAX;
@@ -4558,7 +4558,7 @@ static int transcode_from_filter(FilterGraph *graph, InputStream **best_ist)
  *
  * @return  0 for success, <0 for error
  */
-static int transcode_step(void)
+static int transcode_step(void) // 进行转码
 {
     OutputStream *ost;
     InputStream  *ist = NULL;
@@ -4635,7 +4635,7 @@ static int transcode(void) // 开始转换
     int64_t timer_start;
     int64_t total_packets_written = 0;
 
-    ret = transcode_init(); // 初始化
+    ret = transcode_init();                     // 初始化
     if (ret < 0)
         goto fail;
 
@@ -4643,14 +4643,14 @@ static int transcode(void) // 开始转换
         av_log(NULL, AV_LOG_INFO, "Press [q] to stop, [?] for help\n");
     }
 
-    timer_start = av_gettime_relative();
+    timer_start = av_gettime_relative();        // 获得相对时间
 
 #if HAVE_THREADS
     if ((ret = init_input_threads()) < 0)
         goto fail;
 #endif
 
-    while (!received_sigterm) {
+    while (!received_sigterm) {                 // 循环直到收到退出信号
         int64_t cur_time= av_gettime_relative();
 
         /* if 'q' pressed, exits */
@@ -4664,7 +4664,7 @@ static int transcode(void) // 开始转换
             break;
         }
 
-        ret = transcode_step();
+        ret = transcode_step();                 // 进行转码
         if (ret < 0 && ret != AVERROR_EOF) {
             av_log(NULL, AV_LOG_ERROR, "Error while filtering: %s\n", av_err2str(ret));
             break;
@@ -4678,7 +4678,7 @@ static int transcode(void) // 开始转换
 #endif
 
     /* at the end of stream, we must flush the decoder buffers */
-    for (i = 0; i < nb_input_streams; i++) {
+    for (i = 0; i < nb_input_streams; i++) {    // 处理解码器剩下的缓冲区
         ist = input_streams[i];
         if (!input_files[ist->file_index]->eof_reached) {
             process_input_packet(ist, NULL, 0);
@@ -4821,16 +4821,16 @@ static void log_callback_null(void *ptr, int level, const char *fmt, va_list vl)
 int main(int argc, char **argv)
 {
     int i, ret;
-    BenchmarkTimeStamps ti; // 性能测试起始时间戳
+    BenchmarkTimeStamps ti;                             // 性能测试起始时间戳
 
-    init_dynload();
+    init_dynload();                                     // 初始化动态链接库加载地址
 
-    register_exit(ffmpeg_cleanup);
+    register_exit(ffmpeg_cleanup);                      // 注册程序退出时的清理函数
 
     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
 
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
-    parse_loglevel(argc, argv, options);
+    parse_loglevel(argc, argv, options);                // 解析日志等级选项
 
     if(argc>1 && !strcmp(argv[1], "-d")){
         run_as_daemon=1;
@@ -4840,25 +4840,25 @@ int main(int argc, char **argv)
     }
 
 #if CONFIG_AVDEVICE
-    avdevice_register_all();                // 注册设备信息
+    avdevice_register_all();                            // 注册设备信息
 #endif
-    avformat_network_init();                // 初始化网络
+    avformat_network_init();                            // 初始化网络
 
-    show_banner(argc, argv, options);       // 打印ffmpeg的版本信息
+    show_banner(argc, argv, options);                   // 打印ffmpeg的版本信息
 
     /* parse options and open all input/output files */
-    ret = ffmpeg_parse_options(argc, argv); // 解析输入命令
-    if (ret < 0)
+    ret = ffmpeg_parse_options(argc, argv);             // 解析输入选项
+    if (ret < 0)                                        // 解析选项失败,退出
         exit_program(1);
 
-    if (nb_output_files <= 0 && nb_input_files == 0) {
+    if (nb_output_files <= 0 && nb_input_files == 0) {  // 当没有输出文件时，输入文件为0,退出
         show_usage();
         av_log(NULL, AV_LOG_WARNING, "Use -h to get full help or, even better, run 'man %s'\n", program_name);
         exit_program(1);
     }
 
     /* file converter / grab */
-    if (nb_output_files <= 0) {
+    if (nb_output_files <= 0) {                         // 没有输出文件,退出
         av_log(NULL, AV_LOG_FATAL, "At least one output file must be specified\n");
         exit_program(1);
     }
@@ -4882,7 +4882,7 @@ int main(int argc, char **argv)
                utime / 1000000.0, stime / 1000000.0, rtime / 1000000.0);
     }
     av_log(NULL, AV_LOG_DEBUG, "%"PRIu64" frames successfully decoded, %"PRIu64" decoding errors\n",
-           decode_error_stat[0], decode_error_stat[1]);
+           decode_error_stat[0], decode_error_stat[1]); // 打debug日志
     if ((decode_error_stat[0] + decode_error_stat[1]) * max_error_rate < decode_error_stat[1])
         exit_program(69);
 

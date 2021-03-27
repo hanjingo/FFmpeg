@@ -187,31 +187,31 @@ struct AVPacket;
 /**
  * AVCodec.
  */
-typedef struct AVCodec {
+typedef struct AVCodec {    // 编解码器,采用链表维护，每一个都有其对应的名字、类型、CodecID和对数据进行处理的编解码函数指针
     /**
      * Name of the codec implementation.
      * The name is globally unique among encoders and among decoders (but an
      * encoder and a decoder can share the same name).
      * This is the primary way to find a codec from the user perspective.
      */
-    const char *name;
+    const char *name;                       // 名字
     /**
      * Descriptive name for the codec, meant to be more human readable than name.
      * You should use the NULL_IF_CONFIG_SMALL() macro to define it.
      */
-    const char *long_name;
-    enum AVMediaType type;
-    enum AVCodecID id;
+    const char *long_name;                  // 全名
+    enum AVMediaType type;                  // 多媒体类型
+    enum AVCodecID id;                      // id
     /**
      * Codec capabilities.
      * see AV_CODEC_CAP_*
      */
     int capabilities;
-    const AVRational *supported_framerates; ///< array of supported framerates, or NULL if any, array is terminated by {0,0}
-    const enum AVPixelFormat *pix_fmts;     ///< array of supported pixel formats, or NULL if unknown, array is terminated by -1
-    const int *supported_samplerates;       ///< array of supported audio samplerates, or NULL if unknown, array is terminated by 0
-    const enum AVSampleFormat *sample_fmts; ///< array of supported sample formats, or NULL if unknown, array is terminated by -1
-    const uint64_t *channel_layouts;         ///< array of support channel layouts, or NULL if unknown. array is terminated by 0
+    const AVRational *supported_framerates; // 支持的视频帧率       ///< array of supported framerates, or NULL if any, array is terminated by {0,0}
+    const enum AVPixelFormat *pix_fmts;     // 支持的视频像素格式   ///< array of supported pixel formats, or NULL if unknown, array is terminated by -1 // 支持的像素格式数组，规定以AV_PIX_FMT_NONE结尾
+    const int *supported_samplerates;       // 支持的音频采样率     ///< array of supported audio samplerates, or NULL if unknown, array is terminated by 0
+    const enum AVSampleFormat *sample_fmts; // 支持的音频采样格式   ///< array of supported sample formats, or NULL if unknown, array is terminated by -1
+    const uint64_t *channel_layouts;        // 支持的音频声道数     ///< array of support channel layouts, or NULL if unknown. array is terminated by 0
     uint8_t max_lowres;                     ///< maximum value for lowres supported by the decoder
     const AVClass *priv_class;              ///< AVClass for the private context
     const AVProfile *profiles;              ///< array of recognized profiles, or NULL if unknown, array is terminated by {FF_PROFILE_UNKNOWN}
@@ -235,7 +235,7 @@ typedef struct AVCodec {
      * New public fields should be added right above.
      *****************************************************************
      */
-    int priv_data_size;
+    int priv_data_size;                     // 私有数据大小
 #if FF_API_NEXT
     struct AVCodec *next;
 #endif
@@ -345,7 +345,7 @@ const AVCodec *av_codec_iterate(void **opaque);
  * @param id AVCodecID of the requested decoder
  * @return A decoder if one was found, NULL otherwise.
  */
-AVCodec *avcodec_find_decoder(enum AVCodecID id);
+AVCodec *avcodec_find_decoder(enum AVCodecID id);           // 根据编解码器id查找一个解码器
 
 /**
  * Find a registered decoder with the specified name.
@@ -353,7 +353,7 @@ AVCodec *avcodec_find_decoder(enum AVCodecID id);
  * @param name name of the requested decoder
  * @return A decoder if one was found, NULL otherwise.
  */
-AVCodec *avcodec_find_decoder_by_name(const char *name);
+AVCodec *avcodec_find_decoder_by_name(const char *name);    // 根据编解码器名字查找一个解码器
 
 /**
  * Find a registered encoder with a matching codec ID.
@@ -361,7 +361,7 @@ AVCodec *avcodec_find_decoder_by_name(const char *name);
  * @param id AVCodecID of the requested encoder
  * @return An encoder if one was found, NULL otherwise.
  */
-AVCodec *avcodec_find_encoder(enum AVCodecID id);
+AVCodec *avcodec_find_encoder(enum AVCodecID id);           // 根据编解码器id查找一个编码器
 
 /**
  * Find a registered encoder with the specified name.
@@ -369,7 +369,7 @@ AVCodec *avcodec_find_encoder(enum AVCodecID id);
  * @param name name of the requested encoder
  * @return An encoder if one was found, NULL otherwise.
  */
-AVCodec *avcodec_find_encoder_by_name(const char *name);
+AVCodec *avcodec_find_encoder_by_name(const char *name);    // 根据编解码器名字查找一个编码器
 /**
  * @return a non-zero number if codec is an encoder, zero otherwise
  */

@@ -116,7 +116,7 @@ typedef struct EncodeSimpleContext {
     AVFrame *in_frame;
 } EncodeSimpleContext;
 
-typedef struct AVCodecInternal {
+typedef struct AVCodecInternal {    // 内部编解码器
     /**
      * Whether the parent AVCodecContext is a copy of the context which had
      * init() called on it.

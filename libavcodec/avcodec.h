@@ -531,9 +531,9 @@ typedef struct AVCodecContext {
     const AVClass *av_class;
     int log_level_offset;
 
-    enum AVMediaType codec_type; /* see AVMEDIA_TYPE_xxx */
-    const struct AVCodec  *codec;
-    enum AVCodecID     codec_id; /* see AV_CODEC_ID_xxx */
+    enum AVMediaType codec_type;    // 编解码器类型(视频，音频...) /* see AVMEDIA_TYPE_xxx */
+    const struct AVCodec  *codec;   // 编解码器(H.264, MPEG2...)
+    enum AVCodecID     codec_id;    // 编解码器id               /* see AV_CODEC_ID_xxx */
 
     /**
      * fourcc (LSB first, so "ABCD" -> ('D'<<24) + ('C'<<16) + ('B'<<8) + 'A').
@@ -646,7 +646,7 @@ typedef struct AVCodecContext {
      * - decoding: the use of this field for decoding is deprecated.
      *             Use framerate instead.
      */
-    AVRational time_base;
+    AVRational time_base;   // 时间基(s)
 
     /**
      * For some codecs, the time base is closer to the field rate than the frame rate.
@@ -696,7 +696,7 @@ typedef struct AVCodecContext {
      *             to be set by the caller. During decoding, the decoder may
      *             overwrite those values as required while parsing the data.
      */
-    int width, height;
+    int width, height;  // 宽，高
 
     /**
      * Bitstream width / height, may be different from width/height e.g. when
@@ -718,7 +718,7 @@ typedef struct AVCodecContext {
      * - encoding: Set by user.
      * - decoding: unused
      */
-    int gop_size;
+    int gop_size;       // gop大小,2个关键帧间隔长度
 
     /**
      * Pixel format, see AV_PIX_FMT_xxx.
@@ -733,7 +733,7 @@ typedef struct AVCodecContext {
      * - decoding: Set by user if known, overridden by libavcodec while
      *             parsing the data.
      */
-    enum AVPixelFormat pix_fmt;
+    enum AVPixelFormat pix_fmt; // 像素格式
 
     /**
      * If non NULL, 'draw_horiz_band' is called by the libavcodec
@@ -760,7 +760,7 @@ typedef struct AVCodecContext {
      */
     void (*draw_horiz_band)(struct AVCodecContext *s,
                             const AVFrame *src, int offset[AV_NUM_DATA_POINTERS],
-                            int y, int type, int height);
+                            int y, int type, int height);   // 绘制水平边界
 
     /**
      * callback to negotiate the pixelFormat
@@ -783,7 +783,7 @@ typedef struct AVCodecContext {
      * - encoding: Set by user.
      * - decoding: unused
      */
-    int max_b_frames;
+    int max_b_frames;       // 非B帧中间的最大B帧数量
 
     /**
      * qscale factor between IP and B-frames
@@ -1111,7 +1111,7 @@ typedef struct AVCodecContext {
      * - encoding: Set by user.
      * - decoding: Set by lavc.
      */
-    int refs;
+    int refs;   // 运动估计参考帧数量
 
 #if FF_API_PRIVATE_OPT
     /** @deprecated use encoder private options instead */
@@ -1183,15 +1183,15 @@ typedef struct AVCodecContext {
     enum AVFieldOrder field_order;
 
     /* audio only */
-    int sample_rate; ///< samples per second
-    int channels;    ///< number of audio channels
+    int sample_rate;                // 采样率 ///< samples per second
+    int channels;                   // 声道数 ///< number of audio channels
 
     /**
      * audio sample format
      * - encoding: Set by user.
      * - decoding: Set by libavcodec.
      */
-    enum AVSampleFormat sample_fmt;  ///< sample format
+    enum AVSampleFormat sample_fmt;  //采样格式 ///< sample format
 
     /* The following data should not be initialized. */
     /**
@@ -2764,7 +2764,7 @@ void avcodec_register_all(void);
  *
  * @return An AVCodecContext filled with default values or NULL on failure.
  */
-AVCodecContext *avcodec_alloc_context3(const AVCodec *codec);
+AVCodecContext *avcodec_alloc_context3(const AVCodec *codec);   // 根据AVCodec分配合适的AVCodecContext
 
 /**
  * Free the codec context and everything associated with it and write NULL to
@@ -3022,7 +3022,7 @@ enum AVChromaLocation avcodec_chroma_pos_to_enum(int xpos, int ypos);
  */
 attribute_deprecated
 int avcodec_decode_audio4(AVCodecContext *avctx, AVFrame *frame,
-                          int *got_frame_ptr, const AVPacket *avpkt);
+                          int *got_frame_ptr, const AVPacket *avpkt);   // 解码一个音频帧，输入数据在AVPacket结构中，输出数据在AVFrame结构中
 
 /**
  * Decode the video frame of size avpkt->size from avpkt->data into picture.
@@ -3072,7 +3072,7 @@ int avcodec_decode_audio4(AVCodecContext *avctx, AVFrame *frame,
 attribute_deprecated
 int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
                          int *got_picture_ptr,
-                         const AVPacket *avpkt);
+                         const AVPacket *avpkt);    // 编码一个视频帧，输入数据在AVFrame结构中，输出数据在AVPacket结构中
 
 /**
  * Decode a subtitle message.
@@ -3691,7 +3691,7 @@ int avcodec_encode_audio2(AVCodecContext *avctx, AVPacket *avpkt,
  */
 attribute_deprecated
 int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt,
-                          const AVFrame *frame, int *got_packet_ptr);
+                          const AVFrame *frame, int *got_packet_ptr);   // 编码一个视频帧，输入数据在AVFrame结构中，输出数据在AVPacket中
 
 int avcodec_encode_subtitle(AVCodecContext *avctx, uint8_t *buf, int buf_size,
                             const AVSubtitle *sub);

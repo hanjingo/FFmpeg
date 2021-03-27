@@ -868,8 +868,8 @@ typedef struct AVStreamInternal AVStreamInternal;
  * version bump.
  * sizeof(AVStream) must not be used outside libav*.
  */
-typedef struct AVStream {
-    int index;    /**< stream index in AVFormatContext */
+typedef struct AVStream { // 媒体流
+    int index;                  // 在AVFormatContext中流的索引，其值自动生成(AVFormatContext::streams[index])    /**< stream index in AVFormatContext */
     /**
      * Format-specific stream ID.
      * decoding: set by libavformat
@@ -881,7 +881,7 @@ typedef struct AVStream {
      * @deprecated use the codecpar struct instead
      */
     attribute_deprecated
-    AVCodecContext *codec;
+    AVCodecContext *codec;      // 该stream自带的AVCodecContext,一对一
 #endif
     void *priv_data;
 
@@ -897,7 +897,7 @@ typedef struct AVStream {
      *           written into the file (which may or may not be related to the
      *           user-provided one, depending on the format).
      */
-    AVRational time_base;
+    AVRational time_base;       // 时间基
 
     /**
      * Decoding: pts of the first frame of the stream in presentation order, in stream time base.
@@ -907,7 +907,7 @@ typedef struct AVStream {
      * @note The ASF header does NOT contain a correct start_time the ASF
      * demuxer must NOT set this.
      */
-    int64_t start_time;
+    int64_t start_time;         // 开始时间
 
     /**
      * Decoding: duration of the stream, in stream time base.
@@ -917,9 +917,9 @@ typedef struct AVStream {
      * Encoding: May be set by the caller before avformat_write_header() to
      * provide a hint to the muxer about the estimated duration.
      */
-    int64_t duration;
+    int64_t duration;           // 流长度
 
-    int64_t nb_frames;                 ///< number of frames in this stream if known or 0
+    int64_t nb_frames;          // 帧数     ///< number of frames in this stream if known or 0
 
     int disposition; /**< AV_DISPOSITION_* bit field */
 
@@ -932,7 +932,7 @@ typedef struct AVStream {
      */
     AVRational sample_aspect_ratio;
 
-    AVDictionary *metadata;
+    AVDictionary *metadata;     // 元数据
 
     /**
      * Average framerate
@@ -941,7 +941,7 @@ typedef struct AVStream {
      *             avformat_find_stream_info().
      * - muxing: May be set by the caller before avformat_write_header().
      */
-    AVRational avg_frame_rate;
+    AVRational avg_frame_rate;  // 帧率
 
     /**
      * For streams with AV_DISPOSITION_ATTACHED_PIC disposition, this packet
@@ -950,7 +950,7 @@ typedef struct AVStream {
      * decoding: set by libavformat, must not be modified by the caller.
      * encoding: unused
      */
-    AVPacket attached_pic;
+    AVPacket attached_pic;      // 附带的图片，比如MP3音频专辑封面
 
     /**
      * An array of side data that applies to the whole stream (i.e. the
@@ -1338,7 +1338,7 @@ typedef struct AVFormatInternal AVFormatInternal;
  * The AVOption/command line parameter names differ in some cases from the C
  * structure field names for historic reasons or brevity.
  */
-typedef struct AVFormatContext {
+typedef struct AVFormatContext { // 格式转换过程中实现输入和输出功能、保存相关数据的主要结构，描述了一个媒体文件或媒体流的构成和基本信息
     /**
      * A class for logging and @ref avoptions. Set by avformat_alloc_context().
      * Exports (de)muxer private options if they exist.
@@ -1380,7 +1380,7 @@ typedef struct AVFormatContext {
      * iformat/oformat.flags. In such a case, the (de)muxer will handle
      * I/O in some other way and this field will be NULL.
      */
-    AVIOContext *pb;
+    AVIOContext *pb;            // 输入数据的缓存
 
     /* stream info */
     /**
@@ -1394,7 +1394,7 @@ typedef struct AVFormatContext {
      *
      * Set by avformat_new_stream(), must not be modified by any other code.
      */
-    unsigned int nb_streams;
+    unsigned int nb_streams;    // 音视频流的个数
     /**
      * A list of all streams in the file. New streams are created with
      * avformat_new_stream().
@@ -1406,7 +1406,7 @@ typedef struct AVFormatContext {
      *
      * Freed by libavformat in avformat_free_context().
      */
-    AVStream **streams;
+    AVStream **streams;         // AVStream结构指针数组, 包含了所有内嵌媒体流的描述，其内部有 AVInputFormat + AVOutputFormat 结构体，来表示输入输出的文件格式
 
 #if FF_API_FORMAT_FILENAME
     /**
@@ -1418,7 +1418,7 @@ typedef struct AVFormatContext {
      * @deprecated Use url instead.
      */
     attribute_deprecated
-    char filename[1024];
+    char filename[1024];        // 输入/输出文件名
 #endif
 
     /**
@@ -1453,14 +1453,14 @@ typedef struct AVFormatContext {
      *
      * Demuxing only, set by libavformat.
      */
-    int64_t duration;
+    int64_t duration;           // 流的时长(us)
 
     /**
      * Total stream bitrate in bit/s, 0 if not
      * available. Never set it directly if the file_size and the
      * duration are known as FFmpeg can compute it automatically.
      */
-    int64_t bit_rate;
+    int64_t bit_rate;           // 比特率(bps)
 
     unsigned int packet_size;
     int max_delay;
@@ -2218,7 +2218,7 @@ AVProgram *av_new_program(AVFormatContext *s, int id);
  * failure
  */
 int avformat_alloc_output_context2(AVFormatContext **ctx, ff_const59 AVOutputFormat *oformat,
-                                   const char *format_name, const char *filename);
+                                   const char *format_name, const char *filename);  // 根据文件的输出格式，扩展名或文件名等分配合适的AVFormatContext结构
 
 /**
  * @addtogroup lavf_decoding
@@ -2308,7 +2308,7 @@ int av_probe_input_buffer(AVIOContext *pb, ff_const59 AVInputFormat **fmt,
  *
  * @note If you want to use custom IO, preallocate the format context and set its pb field.
  */
-int avformat_open_input(AVFormatContext **ps, const char *url, ff_const59 AVInputFormat *fmt, AVDictionary **options);
+int avformat_open_input(AVFormatContext **ps, const char *url, ff_const59 AVInputFormat *fmt, AVDictionary **options);  // 创建并初始化部分值，但其他一些值(如mux_rate, key)等需要手工设置初始值，否则可能出现异常
 
 attribute_deprecated
 int av_demuxer_open(AVFormatContext *ic);
@@ -2334,7 +2334,7 @@ int av_demuxer_open(AVFormatContext *ic);
  * @todo Let the user decide somehow what information is needed so that
  *       we do not waste time getting stuff the user does not need.
  */
-int avformat_find_stream_info(AVFormatContext *ic, AVDictionary **options);
+int avformat_find_stream_info(AVFormatContext *ic, AVDictionary **options); // 获取必要的编解码器参数（如AVMediaType, CodecID）,设置到AVFormatContext::streams[i]::codec中
 
 /**
  * Find the programs which belong to a given stream.
@@ -2408,7 +2408,7 @@ int av_find_best_stream(AVFormatContext *ic,
  * @note pkt will be initialized, so it may be uninitialized, but it must not
  *       contain data that needs to be freed.
  */
-int av_read_frame(AVFormatContext *s, AVPacket *pkt);
+int av_read_frame(AVFormatContext *s, AVPacket *pkt);   // 从多媒体文件或多媒体流中读取媒体数据，获取的数据由AVPacket来存放
 
 /**
  * Seek to the keyframe at timestamp.
@@ -2424,7 +2424,7 @@ int av_read_frame(AVFormatContext *s, AVPacket *pkt);
  * @return >= 0 on success
  */
 int av_seek_frame(AVFormatContext *s, int stream_index, int64_t timestamp,
-                  int flags);
+                  int flags);                           // 改变媒体文件的读写指针来实现对媒体文件的随机访问，通常支持基于时间，文件偏移，帧号(AVSEEK_FLAG_FRAME)的随机访问方式
 
 /**
  * Seek to timestamp ts.

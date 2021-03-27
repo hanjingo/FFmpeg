@@ -54,7 +54,7 @@ int64_t av_gcd(int64_t a, int64_t b) {
     }
     return (uint64_t)u << k;
 }
-
+// 将以时间基c表示的值a转换为以时间基b来表示, 即计算 a*b/c的值并取整;
 int64_t av_rescale_rnd(int64_t a, int64_t b, int64_t c, enum AVRounding rnd)
 {
     int64_t r = 0;
@@ -138,7 +138,7 @@ int64_t av_rescale_q_rnd(int64_t a, AVRational bq, AVRational cq,
     int64_t c = cq.num * (int64_t)bq.den;
     return av_rescale_rnd(a, b, c, rnd);
 }
-
+// 计算packet的pts,把时间戳从一个时间基cq调整到另一个时间基bq,并返回时间戳; 
 int64_t av_rescale_q(int64_t a, AVRational bq, AVRational cq)
 {
     return av_rescale_q_rnd(a, bq, cq, AV_ROUND_NEAR_INF);
