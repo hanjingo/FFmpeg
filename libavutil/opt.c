@@ -583,7 +583,7 @@ static int set_number(void *obj, const char *name, double num, int den, int64_t 
     return write_number(obj, o, dst, num, den, intnum);
 }
 
-int av_opt_set_int(void *obj, const char *name, int64_t val, int search_flags)
+int av_opt_set_int(void *obj, const char *name, int64_t val, int search_flags) // 根据类的成员名赋值int类型的值
 {
     return set_number(obj, name, 1, 1, val, search_flags);
 }

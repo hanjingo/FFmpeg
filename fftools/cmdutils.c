@@ -114,7 +114,7 @@ static void log_callback_report(void *ptr, int level, const char *fmt, va_list v
     }
 }
 
-void init_dynload(void)
+void init_dynload(void) // 初始化动态链接库地址
 {
 #if HAVE_SETDLLDIRECTORY && defined(_WIN32)
     /* Calling SetDllDirectory with the empty string (but not NULL) removes the
@@ -500,7 +500,7 @@ static void check_options(const OptionDef *po)
         po++;
     }
 }
-
+// 解析日志等级; argc:, argv:, options:
 void parse_loglevel(int argc, char **argv, const OptionDef *options)
 {
     int idx = locate_option(argc, argv, options, "loglevel");
@@ -972,7 +972,7 @@ static void expand_filename_template(AVBPrint *bp, const char *template,
         }
     }
 }
-
+// 初始化:file或level
 static int init_report(const char *env)
 {
     char *filename_template = NULL;

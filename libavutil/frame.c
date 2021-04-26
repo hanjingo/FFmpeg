@@ -186,7 +186,7 @@ static void wipe_side_data(AVFrame *frame)
 
     av_freep(&frame->side_data);
 }
-
+// 分配一帧的存储空间
 AVFrame *av_frame_alloc(void)
 {
     AVFrame *frame = av_mallocz(sizeof(*frame));

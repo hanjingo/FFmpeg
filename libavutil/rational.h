@@ -55,9 +55,9 @@
 /**
  * Rational number (pair of numerator and denominator).
  */
-typedef struct AVRational{
-    int num; ///< Numerator
-    int den; ///< Denominator
+typedef struct AVRational{  // 用来标识一个分数
+    int num; ///< Numerator     // 分子
+    int den; ///< Denominator   // 分母
 } AVRational;
 
 /**

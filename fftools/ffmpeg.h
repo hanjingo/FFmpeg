@@ -233,24 +233,24 @@ typedef struct OptionsContext {
     int        nb_autoscale;
 } OptionsContext;
 
-typedef struct InputFilter {
+typedef struct InputFilter { // 输入过滤器
     AVFilterContext    *filter;
-    struct InputStream *ist;
-    struct FilterGraph *graph;
-    uint8_t            *name;
-    enum AVMediaType    type;   // AVMEDIA_TYPE_SUBTITLE for sub2video
+    struct InputStream *ist;        // 输入流
+    struct FilterGraph *graph;      // 图像过滤器
+    uint8_t            *name;       // 名字
+    enum AVMediaType    type;       // 媒体类型 // AVMEDIA_TYPE_SUBTITLE for sub2video
 
-    AVFifoBuffer *frame_queue;
+    AVFifoBuffer *frame_queue;      // 帧队列
 
     // parameters configured for this input
     int format;
 
-    int width, height;
-    AVRational sample_aspect_ratio;
+    int width, height;              // 宽，高
+    AVRational sample_aspect_ratio; // 
 
-    int sample_rate;
-    int channels;
-    uint64_t channel_layout;
+    int sample_rate;                // 采样率
+    int channels;                   // 声道数量
+    uint64_t channel_layout;        // 声道布局
 
     AVBufferRef *hw_frames_ctx;
 
@@ -392,7 +392,7 @@ typedef struct InputStream {    // 输入流
     int got_output;
 } InputStream;
 
-typedef struct InputFile {
+typedef struct InputFile {  // 输入源文件
     AVFormatContext *ctx;
     int eof_reached;      /* true if eof reached */
     int eagain;           /* true if last read attempt returned EAGAIN */
@@ -442,27 +442,27 @@ typedef enum {
     MUXER_FINISHED = 2,
 } OSTFinished ;
 
-typedef struct OutputStream { // 输出流
-    int file_index;          /* file index */                               // 文件索引
-    int index;               /* stream index in the output file */          // 输出流索引
-    int source_index;        /* InputStream index */                        // 输入流索引
-    AVStream *st;            /* stream in the output file */                // 输出流
-    int encoding_needed;     /* true if encoding needed for this stream */  // 是否需要编码
-    int frame_number;                                                       // 帧号
+typedef struct OutputStream {           // 输出流
+    int file_index;                     // 文件索引     /* file index */
+    int index;                          // 输出流索引   /* stream index in the output file */
+    int source_index;                   // 输入流索引   /* InputStream index */
+    AVStream *st;                       // 输出流      /* stream in the output file */
+    int encoding_needed;                // 是否需要编码 /* true if encoding needed for this stream */
+    int frame_number;                   // 帧号
     /* input pts and corresponding output pts
        for A/V sync */
-    struct InputStream *sync_ist; /* input stream to sync against */        // 输入流同步依据
+    struct InputStream *sync_ist;       // 输入流同步依据 /* input stream to sync against */
     int64_t sync_opts;       /* output frame counter, could be changed to some true timestamp */ // FIXME look at frame_number
     /* pts of the first frame encoded for this stream, used for limiting
      * recording time */
-    int64_t first_pts;          // 第一帧的编码时间
+    int64_t first_pts;                  // 第一帧的编码时间
     /* dts of the last packet sent to the muxer */
-    int64_t last_mux_dts;       // 最后一个封包时间
+    int64_t last_mux_dts;               // 最后一个封包时间
     // the timebase of the packets sent to the muxer
-    AVRational mux_timebase;    // 封包时间基
-    AVRational enc_timebase;    // 编码时间基
+    AVRational mux_timebase;            // 封包时间基
+    AVRational enc_timebase;            // 编码时间基
 
-    AVBSFContext            *bsf_ctx;
+    AVBSFContext            *bsf_ctx;   // 
 
     AVCodecContext *enc_ctx;
     AVCodecParameters *ref_par; /* associated input codec parameters with encoders options applied */
@@ -554,7 +554,7 @@ typedef struct OutputStream { // 输出流
     int64_t error[4];
 } OutputStream;
 
-typedef struct OutputFile {
+typedef struct OutputFile { // 输出文件
     AVFormatContext *ctx;
     AVDictionary *opts;
     int ost_index;       /* index of the first stream in output_streams */
@@ -567,10 +567,10 @@ typedef struct OutputFile {
     int header_written;
 } OutputFile;
 
-extern InputStream **input_streams;
-extern int        nb_input_streams;
-extern InputFile   **input_files;
-extern int        nb_input_files;
+extern InputStream **input_streams;     // 输入流
+extern int        nb_input_streams;     // 输入流数量
+extern InputFile   **input_files;       // 输入文件
+extern int        nb_input_files;       // 输入文件数量
 
 extern OutputStream **output_streams;
 extern int         nb_output_streams;
